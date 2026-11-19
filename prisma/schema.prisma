@@ -1,0 +1,62 @@
+// Prisma Schema - Chuẩn bị sẵn cho Pha 2 (PostgreSQL)
+// Khi muốn chuyển từ Google Sheets sang PostgreSQL:
+// 1. Chạy: npx prisma db push
+// 2. Đổi STORAGE_DRIVER=postgres trong .env.local
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Bảng đơn hàng (tương ứng trực tiếp với 10 cột trong Google Sheet)
+model Order {
+  id          String   @id @default(uuid())
+  orderId     Int      @unique @map("order_id") // ID từ Baostar
+  serviceId   Int      @map("service_id")
+  serviceName String   @map("service_name")
+  targetLink  String   @map("target_link")
+  quantity    Int
+  costVnd     Decimal  @map("cost_vnd") @db.Decimal(12, 2)
+  status      String   @default("Pending")
+  remains     Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Dành cho mở rộng đa người dùng (Pha 2)
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@map("orders")
+}
+
+// Bảng người dùng (Pha 2)
+model User {
+  id          String        @id @default(uuid())
+  email       String        @unique
+  name        String?
+  balance     Decimal       @default(0) @db.Decimal(12, 2)
+  role        String        @default("USER")
+  orders      Order[]
+  transactions Transaction[]
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@map("users")
+}
+
+// Bảng giao dịch nạp tiền VietQR / PayOS (Pha 2)
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id])
+  amount      Decimal  @db.Decimal(12, 2)
+  type        String   // TOPUP | PURCHASE | REFUND
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("transactions")
+}
+

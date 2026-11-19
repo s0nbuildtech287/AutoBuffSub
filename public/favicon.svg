@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="50%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#a5f3fc" />
+    </linearGradient>
+    <linearGradient id="subGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Squircle -->
+  <rect width="100" height="100" rx="26" fill="url(#bgGrad)" />
+  <rect x="2" y="2" width="96" height="96" rx="24" stroke="#ffffff" stroke-opacity="0.25" stroke-width="2" />
+
+  <!-- Subscriber Avatar Silhouette Behind -->
+  <circle cx="36" cy="38" r="14" fill="url(#subGrad)" fill-opacity="0.5" />
+  <path d="M18 72 C18 56, 30 52, 38 52 C46 52, 58 56, 58 72 Z" fill="url(#subGrad)" fill-opacity="0.5" />
+
+  <!-- Dynamic Upward Lightning / Boost Arrow (Auto Buff) -->
+  <path d="M54 18 L76 46 L58 46 L68 82 L34 48 L50 48 Z" fill="url(#boltGrad)" />
+
+  <!-- Orbiting Success Beacon Dot -->
+  <circle cx="80" cy="24" r="6" fill="#10b981" stroke="#ffffff" stroke-width="2" />
+</svg>
+
