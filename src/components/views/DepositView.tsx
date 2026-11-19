@@ -109,15 +109,7 @@ export const DepositView: React.FC<DepositViewProps> = ({
     return () => clearInterval(timer);
   }, [userCode, balanceVnd]);
 
-  // Simulation test button for local demonstration
-  const handleSimulatePayment = () => {
-    const amount = effectiveAmount;
-    setDepositSuccess(true);
-    setSuccessAmount(amount);
-    if (onBalanceUpdate) {
-      onBalanceUpdate(balanceVnd + amount);
-    }
-  };
+
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
@@ -228,21 +220,6 @@ export const DepositView: React.FC<DepositViewProps> = ({
                   VND
                 </span>
               </div>
-            </div>
-
-            {/* Simulation test button */}
-            <div className="pt-2 border-t border-app-border flex items-center justify-between gap-3">
-              <div className="text-[11px] text-app-subtle">
-                Cần test ngay số dư trên web?
-              </div>
-              <button
-                type="button"
-                onClick={handleSimulatePayment}
-                className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 font-bold text-xs flex items-center gap-1.5 transition"
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                <span>Mô phỏng nạp thành công</span>
-              </button>
             </div>
           </div>
 
