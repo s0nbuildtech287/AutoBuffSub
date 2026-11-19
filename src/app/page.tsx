@@ -75,6 +75,15 @@ export default function App() {
     text: string;
   } | null>(null);
 
+  // Tự động tắt thông báo toast sau 4.5 giây để giao diện luôn gọn gàng
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
+
   useEffect(() => {
     const routeViews: Record<string, NavItemKey> = {
       '/dashboard': 'order',
@@ -431,10 +440,10 @@ export default function App() {
 
             {/* Dynamic Page Views */}
             <main className="flex-1 p-3 sm:p-5 lg:p-6 w-full max-w-[1800px] mx-auto pb-28 lg:pb-8">
-              {/* Toast Notification Alert */}
+              {/* Toast Notification Alert (Tự động ẩn sau 4.5s) */}
               {toastMessage && (
                 <div
-                  className={`mb-4 p-3.5 sm:p-4 rounded-xl border flex items-start gap-3 text-xs sm:text-sm shadow-xs transition-all ${
+                  className={`mb-4 p-3.5 sm:p-4 rounded-xl border flex items-start gap-3 text-xs sm:text-sm shadow-md transition-all animate-in fade-in slide-in-from-top-2 duration-300 ${
                     toastMessage.type === 'success'
                       ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
                       : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'

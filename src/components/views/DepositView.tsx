@@ -40,7 +40,15 @@ export const DepositView: React.FC<DepositViewProps> = ({
   const [depositSuccess, setDepositSuccess] = useState<boolean>(false);
   const [successAmount, setSuccessAmount] = useState<number>(0);
 
-  // Bank Info of Bùi Xuân Sơn
+  // Tự động tắt thông báo nạp thành công sau 7 giây
+  useEffect(() => {
+    if (depositSuccess) {
+      const timer = setTimeout(() => {
+        setDepositSuccess(false);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [depositSuccess]);
   const BANK_CONFIG = {
     bankId: 'mbbank',
     bankName: 'MB Bank (Ngân hàng TMCP Quân đội)',
