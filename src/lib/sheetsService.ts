@@ -3,7 +3,10 @@
  */
 
 function getSheetWebhookUrl(): string {
-  return process.env.GOOGLE_SHEET_WEBHOOK_URL || '';
+  return (
+    process.env.GOOGLE_SHEET_WEBHOOK_URL ||
+    'https://script.google.com/macros/s/AKfycbwY_50mEAFv6Kx9jPPbpaV9_3RJYMLBLYbZKohYl4yJSFdMqrdUJaBWp4KeoDsSpQxlUA/exec'
+  );
 }
 
 export async function callSheetWebhook(payload: Record<string, any>): Promise<any> {
@@ -104,3 +107,4 @@ export async function processDepositOnSheet(data: {
     ...data,
   });
 }
+

@@ -3,7 +3,10 @@ import { OrderEntity } from '@/types/smm';
 
 export class GoogleSheetsOrderRepository implements IOrderRepository {
   private get webhookUrl(): string {
-    return process.env.GOOGLE_SHEET_WEBHOOK_URL || '';
+    return (
+      process.env.GOOGLE_SHEET_WEBHOOK_URL ||
+      'https://script.google.com/macros/s/AKfycbwY_50mEAFv6Kx9jPPbpaV9_3RJYMLBLYbZKohYl4yJSFdMqrdUJaBWp4KeoDsSpQxlUA/exec'
+    );
   }
 
   async createOrder(order: OrderEntity): Promise<boolean> {
