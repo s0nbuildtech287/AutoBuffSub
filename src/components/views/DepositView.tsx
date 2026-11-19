@@ -93,12 +93,12 @@ export const DepositView: React.FC<DepositViewProps> = ({
           if (onBalanceUpdate) {
             onBalanceUpdate(balanceVnd + (data.amount || effectiveAmount));
           }
-        } else if (typeof data.currentSheetBalance === 'number' && data.currentSheetBalance > balanceVnd) {
-          const added = data.currentSheetBalance - balanceVnd;
+        } else if (typeof data.currentBalance === 'number' && data.currentBalance > balanceVnd) {
+          const added = data.currentBalance - balanceVnd;
           setDepositSuccess(true);
           setSuccessAmount(added);
           if (onBalanceUpdate) {
-            onBalanceUpdate(data.currentSheetBalance);
+            onBalanceUpdate(data.currentBalance);
           }
         }
       }

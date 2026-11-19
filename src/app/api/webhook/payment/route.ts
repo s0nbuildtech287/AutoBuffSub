@@ -101,14 +101,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: sheetResult?.message || 'Ghi nhận nạp tiền thành công',
+      message: 'Ghi nhận nạp tiền thành công',
       data: newRecord,
-      sheetResult,
     });
   } catch (error: any) {
     console.error('[API Webhook Payment] Error:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Lỗi xử lý webhook nạp tiền' },
+      { success: false, error: 'Lỗi xử lý giao dịch nạp tiền' },
       { status: 500 }
     );
   }
@@ -146,6 +145,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     success: true,
     paid: false,
-    currentSheetBalance: sheetBalance,
+    currentBalance: sheetBalance,
   });
 }

@@ -56,8 +56,9 @@ export async function POST(req: NextRequest) {
       updatedCount,
     });
   } catch (error: any) {
+    console.error('[API /orders/sync] Exception:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Lỗi đồng bộ trạng thái' },
+      { success: false, error: 'Không thể đồng bộ trạng thái đơn hàng vào lúc này.' },
       { status: 500 }
     );
   }

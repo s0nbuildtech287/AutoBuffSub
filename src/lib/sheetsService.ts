@@ -12,8 +12,8 @@ function getSheetWebhookUrl(): string {
 export async function callSheetWebhook(payload: Record<string, any>): Promise<any> {
   const url = getSheetWebhookUrl();
   if (!url) {
-    console.warn('[SheetService] GOOGLE_SHEET_WEBHOOK_URL is not set.');
-    return { success: false, error: 'Chưa cấu hình GOOGLE_SHEET_WEBHOOK_URL' };
+    console.warn('[DatabaseService] Database URL is not set.');
+    return { success: false, error: 'Chưa cấu hình kết nối cơ sở dữ liệu' };
   }
 
   try {
@@ -25,8 +25,8 @@ export async function callSheetWebhook(payload: Record<string, any>): Promise<an
 
     return await response.json();
   } catch (error: any) {
-    console.error('[SheetService] callSheetWebhook error:', error);
-    return { success: false, error: error.message || 'Lỗi kết nối tới Google Sheet' };
+    console.error('[DatabaseService] callDatabaseWebhook error:', error);
+    return { success: false, error: 'Không thể kết nối đến cơ sở dữ liệu hệ thống' };
   }
 }
 

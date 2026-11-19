@@ -128,16 +128,9 @@ export default function App() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [balRes, srvRes] = await Promise.all([
-        fetch('/api/balance'),
-        fetch('/api/services'),
-      ]);
+      const srvRes = await fetch('/api/services');
+      const srvData = await srvRes.json();
 
-      const [balData, srvData] = await Promise.all([balRes.json(), srvRes.json()]);
-
-      if (balData.success) {
-        setBalance(balData.data);
-      }
       if (srvData.success && Array.isArray(srvData.data)) {
         setServices(srvData.data);
       }
@@ -325,11 +318,6 @@ export default function App() {
           };
           setUser(updatedUser);
           localStorage.setItem('auto_buff_user', JSON.stringify(updatedUser));
-        }
-        const balRes = await fetch('/api/balance');
-        const balData = await balRes.json();
-        if (balData.success) {
-          setBalance(balData.data);
         }
       } else {
         setToastMessage({

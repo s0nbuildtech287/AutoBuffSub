@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
       balanceVnd,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Không thể lấy số dư tài khoản' }, { status: 500 });
   }
 }
 
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Không thể đồng bộ tài khoản' }, { status: 500 });
   }
 }
 

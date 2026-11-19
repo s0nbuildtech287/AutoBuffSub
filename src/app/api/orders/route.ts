@@ -70,17 +70,20 @@ export async function POST(req: NextRequest) {
     // 6. Sau khi đã trừ tiền thành công, gửi lệnh tạo đơn thực tế sang Baostar
     const baostarRes = await baostarClient.addOrder(numServiceId, link.trim(), numQuantity);
 
-    // Nếu Baostar gặp lỗi, HOÀN TIỀN NGAY LẬP TỨC cho người dùng
+    // Nếu gặp lỗi từ đối tác, HOÀN TIỀN NGAY LẬP TỨC cho người dùng
     if (baostarRes.error || !baostarRes.order) {
-      const errorMsg = baostarRes.error || 'Máy chủ Baostar không phản hồi đơn hàng hợp lệ.';
-      console.warn(`[API /orders] Baostar order failed: ${errorMsg}. Refunding ${verifiedCostVnd} to ${cleanUsername}`);
+      const rawError = baostarRes.error || 'Máy chủ hệ thống không phản hồi đơn hàng hợp lệ.';
+      const sanitizedError = String(rawError)
+        .replace(/baostar(\.net)?/gi, 'máy chủ')
+        .replace(/smm/gi, 'dịch vụ');
+      console.warn(`[API /orders] Order failed: ${sanitizedError}. Refunding ${verifiedCostVnd} to ${cleanUsername}`);
       
-      await refundBalanceOnSheet(cleanUsername, verifiedCostVnd, `Baostar API Error: ${errorMsg}`);
+      await refundBalanceOnSheet(cleanUsername, verifiedCostVnd, `Order Error: ${sanitizedError}`);
 
       return NextResponse.json(
         {
           success: false,
-          error: `Đơn hàng thất bại từ nhà cung cấp (${errorMsg}). Số tiền ${verifiedCostVnd.toLocaleString('vi-VN')}đ đã được tự động hoàn lại vào tài khoản của bạn.`,
+          error: `Đơn hàng tạm thời chưa thể khởi tạo (${sanitizedError}). Số tiền ${verifiedCostVnd.toLocaleString('vi-VN')}đ đã được tự động hoàn lại vào ví của bạn.`,
         },
         { status: 400 }
       );

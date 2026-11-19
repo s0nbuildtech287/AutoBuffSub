@@ -6,7 +6,7 @@ const BAOSTAR_API_KEY = process.env.BAOSTAR_API_KEY || '';
 class BaostarClient {
   private async post(payload: Record<string, any>) {
     if (!BAOSTAR_API_KEY) {
-      throw new Error('BAOSTAR_API_KEY is not configured in .env.local');
+      throw new Error('API key chưa được cấu hình');
     }
 
     const response = await fetch(BAOSTAR_API_URL, {
@@ -22,7 +22,7 @@ class BaostarClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Baostar API HTTP error: ${response.status} ${response.statusText}`);
+      throw new Error(`Máy chủ dịch vụ phản hồi mã lỗi: ${response.status}`);
     }
 
     return response.json();

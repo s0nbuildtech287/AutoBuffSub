@@ -61,8 +61,8 @@ export const Topbar: React.FC<TopbarProps> = ({
     }
   };
 
-  // If user is logged in, show user balance, else show system Baostar balance or 0
-  const displayBalanceVnd = user ? user.balanceVnd : (balance?.balanceVnd || 0);
+  // Hiển thị số dư tài khoản của người dùng (khách vãng lai hiển thị 0đ)
+  const displayBalanceVnd = user ? user.balanceVnd : 0;
   const formattedBalanceVnd = new Intl.NumberFormat('vi-VN').format(displayBalanceVnd) + ' ₫';
 
   return (

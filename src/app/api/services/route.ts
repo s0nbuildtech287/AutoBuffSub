@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { baostarClient } from '@/lib/baostar';
-import { calculateSellingRate1k, PROFIT_MULTIPLIER, PROFIT_MARKUP_PERCENT } from '@/lib/pricing';
+import { calculateSellingRate1k, PROFIT_MULTIPLIER } from '@/lib/pricing';
 
 export async function GET() {
   try {
@@ -8,12 +8,12 @@ export async function GET() {
 
     if (!Array.isArray(rawServices)) {
       return NextResponse.json(
-        { success: false, error: 'Unexpected response from Baostar API' },
+        { success: false, error: 'Không thể kết nối đến máy chủ dịch vụ' },
         { status: 500 }
       );
     }
 
-    // Tự động áp dụng mức chênh lệch 30% lợi nhuận cho toàn bộ danh mục & gói máy chủ
+    // Tự động áp dụng mức giá bán cho toàn bộ danh mục & gói máy chủ
     const services = rawServices.map((s) => {
       const originalVnd1k = s.vnd || Number(s.rate) * 27000;
       const sellingVnd1k = calculateSellingRate1k(originalVnd1k);
@@ -32,13 +32,12 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       total: services.length,
-      profitMarkupPercent: PROFIT_MARKUP_PERCENT,
       categories,
       data: services,
     });
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch services' },
+      { success: false, error: 'Không thể tải danh sách dịch vụ từ hệ thống' },
       { status: 500 }
     );
   }
