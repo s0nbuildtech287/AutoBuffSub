@@ -78,11 +78,20 @@ export const DepositView: React.FC<DepositViewProps> = ({
     try {
       const res = await fetch(`/api/webhook/payment?code=${encodeURIComponent(userCode)}`);
       const data = await res.json();
-      if (data.success && data.paid) {
-        setDepositSuccess(true);
-        setSuccessAmount(data.amount || effectiveAmount);
-        if (onBalanceUpdate) {
-          onBalanceUpdate(balanceVnd + (data.amount || effectiveAmount));
+      if (data.success) {
+        if (data.paid) {
+          setDepositSuccess(true);
+          setSuccessAmount(data.amount || effectiveAmount);
+          if (onBalanceUpdate) {
+            onBalanceUpdate(balanceVnd + (data.amount || effectiveAmount));
+          }
+        } else if (typeof data.currentSheetBalance === 'number' && data.currentSheetBalance > balanceVnd) {
+          const added = data.currentSheetBalance - balanceVnd;
+          setDepositSuccess(true);
+          setSuccessAmount(added);
+          if (onBalanceUpdate) {
+            onBalanceUpdate(data.currentSheetBalance);
+          }
         }
       }
     } catch (e) {

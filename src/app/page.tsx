@@ -91,13 +91,24 @@ export default function App() {
     }
   }, [pathname]);
 
-  // Load user from localStorage on mount
+  // Load user from localStorage on mount & sync live balance from Database/Sheet
   useEffect(() => {
     try {
       const stored = localStorage.getItem('auto_buff_user');
       if (stored) {
         const parsed = JSON.parse(stored);
         setUser(parsed);
+        // Đồng bộ số dư thực tế từ Google Sheet Database
+        fetch(`/api/user/balance?username=${encodeURIComponent(parsed.username)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && typeof data.balanceVnd === 'number') {
+              const synced = { ...parsed, balanceVnd: data.balanceVnd };
+              setUser(synced);
+              localStorage.setItem('auto_buff_user', JSON.stringify(synced));
+            }
+          })
+          .catch((err) => console.warn('Sync balance error:', err));
       }
     } catch (e) {
       console.error('Error loading stored user:', e);
@@ -160,6 +171,25 @@ export default function App() {
       type: 'success',
       text: `🎉 Xin chào, ${authUser.fullName}! Đăng nhập thành công.`,
     });
+    // Đồng bộ tài khoản và lấy số dư thực tế từ Google Sheet
+    fetch('/api/user/balance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: authUser.username,
+        email: authUser.email,
+        role: authUser.role,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && typeof data.balanceVnd === 'number') {
+          const synced = { ...authUser, balanceVnd: data.balanceVnd };
+          setUser(synced);
+          localStorage.setItem('auto_buff_user', JSON.stringify(synced));
+        }
+      })
+      .catch((err) => console.warn('Sync user error:', err));
   };
 
   const handleLogout = () => {
@@ -264,6 +294,7 @@ export default function App() {
           serviceId: currentService.service,
           link: targetLink.trim(),
           quantity: Number(quantity),
+          username: user.username,
         }),
       });
 
@@ -276,11 +307,12 @@ export default function App() {
         });
         setTargetLink('');
         fetchOrders();
-        // Cập nhật số dư sau khi đặt đơn
+        // Cập nhật số dư thực tế từ Server/Google Sheet trả về
         if (user) {
+          const newBal = typeof data.newBalance === 'number' ? data.newBalance : Math.max(0, user.balanceVnd - totalCostVnd);
           const updatedUser = {
             ...user,
-            balanceVnd: Math.max(0, user.balanceVnd - totalCostVnd),
+            balanceVnd: newBal,
           };
           setUser(updatedUser);
           localStorage.setItem('auto_buff_user', JSON.stringify(updatedUser));

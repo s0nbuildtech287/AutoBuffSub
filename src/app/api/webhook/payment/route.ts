@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { processDepositOnSheet, getUserBalanceFromSheet } from '@/lib/sheetsService';
 
 // Lưu trữ lịch sử giao dịch webhook tạm thời trong bộ nhớ (In-memory transaction ledger)
 interface TransactionRecord {
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Hỗ trợ cả 2 định dạng Webhook thông dụng nhất: SePay và PayOS
+    // 1. Phân tích gói tin Webhook SePay / PayOS
     let accountNumber = '';
     let amount = 0;
     let content = '';
@@ -50,48 +51,62 @@ export async function POST(req: NextRequest) {
       transactionId = String(body.transaction_id || Date.now());
     }
 
-    // Trích xuất mã định danh nạp tiền (vd: ABS 8492 hoặc ABS8492)
-    const match = content.match(/ABS\s*([a-zA-Z0-9_]+)/i);
-    const depositCode = match ? match[1].toUpperCase() : '';
+    if (!transactionId || amount <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'Thông tin giao dịch không hợp lệ' },
+        { status: 400 }
+      );
+    }
 
+    // 2. Trích xuất mã định danh / Username (vd: "ABS XU4NS0N" hoặc "ABS 84920")
+    const match = content.match(/ABS\s*([a-zA-Z0-9_]+)/i);
+    const depositUsername = match ? match[1].trim() : 'Khách Vãng Lai';
+
+    // 3. Kiểm tra chống giao dịch trùng cấp RAM
+    const inMemoryList = global.globalDepositTransactions || [];
+    const isAlreadyInRAM = inMemoryList.some((t) => String(t.id) === String(transactionId));
+
+    if (isAlreadyInRAM) {
+      return NextResponse.json({
+        success: true,
+        message: 'Giao dịch đã được xử lý trong phiên này (Chống trùng lặp)',
+        duplicate: true,
+      });
+    }
+
+    // 4. Ghi nhận giao dịch vào Google Sheet Database (Tự động chống trùng & Tự cộng số dư)
+    const sheetResult = await processDepositOnSheet({
+      transactionId,
+      amount,
+      username: depositUsername,
+      memo: content,
+      bankName: 'MB Bank (MB)',
+      accountNumber: accountNumber || '8350132872007',
+    });
+
+    // 5. Lưu vào bộ nhớ RAM
     const newRecord: TransactionRecord = {
       id: transactionId,
       gateway: 'MBBank',
       accountNumber: accountNumber || '8350132872007',
       amount: amount,
       content: content,
-      code: depositCode || content,
+      code: depositUsername,
       timestamp: new Date().toISOString(),
       status: 'completed',
     };
 
-    const transactions = global.globalDepositTransactions || [];
-    transactions.unshift(newRecord);
-    global.globalDepositTransactions = transactions;
-
-    // Tự động ghi 1 dòng vào Sheet "LichSuNapTien" nếu có GOOGLE_SHEET_WEBHOOK_URL
-    const sheetWebhook = process.env.GOOGLE_SHEET_WEBHOOK_URL;
-    if (sheetWebhook) {
-      fetch(sheetWebhook, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'LOG_DEPOSIT',
-          transactionId: newRecord.id,
-          username: depositCode || 'Khách Vãng Lai',
-          amount: newRecord.amount,
-          memo: newRecord.content,
-        }),
-      }).catch((err) => console.error('[SheetLogDeposit] Error logging to sheet:', err));
-    }
+    inMemoryList.unshift(newRecord);
+    global.globalDepositTransactions = inMemoryList.slice(0, 50);
 
     return NextResponse.json({
       success: true,
-      message: 'Ghi nhận giao dịch nạp tiền thành công',
+      message: sheetResult?.message || 'Ghi nhận nạp tiền thành công',
       data: newRecord,
+      sheetResult,
     });
   } catch (error: any) {
-    console.error('Webhook payment processing error:', error);
+    console.error('[API Webhook Payment] Error:', error);
     return NextResponse.json(
       { success: false, error: error.message || 'Lỗi xử lý webhook nạp tiền' },
       { status: 500 }
@@ -125,8 +140,12 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  // Nếu không thấy trong RAM, kiểm tra số dư từ Google Sheet
+  const sheetBalance = await getUserBalanceFromSheet(cleanCode);
+
   return NextResponse.json({
     success: true,
     paid: false,
+    currentSheetBalance: sheetBalance,
   });
 }
