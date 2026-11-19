@@ -56,8 +56,8 @@ export async function POST(req: NextRequest) {
 
     const newRecord: TransactionRecord = {
       id: transactionId,
-      gateway: 'Vietcombank',
-      accountNumber: accountNumber || '1020914134',
+      gateway: 'MBBank',
+      accountNumber: accountNumber || '8350132872007',
       amount: amount,
       content: content,
       code: depositCode || content,

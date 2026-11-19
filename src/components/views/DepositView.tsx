@@ -42,11 +42,11 @@ export const DepositView: React.FC<DepositViewProps> = ({
 
   // Bank Info of Bùi Xuân Sơn
   const BANK_CONFIG = {
-    bankId: 'vietcombank',
-    bankName: 'Vietcombank (Ngân hàng TMCP Ngoại thương Việt Nam)',
-    accountNumber: '1020914134',
+    bankId: 'mbbank',
+    bankName: 'MB Bank (Ngân hàng TMCP Quân đội)',
+    accountNumber: '8350132872007',
     accountName: 'BUI XUAN SON',
-    brandColor: 'bg-emerald-600',
+    brandColor: 'bg-blue-600',
   };
 
   // Unique Transfer Memo for User (e.g., ABS 84920 or ABS <username>)
@@ -123,7 +123,7 @@ export const DepositView: React.FC<DepositViewProps> = ({
             </h2>
           </div>
           <p className="text-xs sm:text-sm text-app-subtle">
-            Quét mã QR chuyển khoản trực tiếp vào tài khoản <strong>Vietcombank</strong> của <strong>Bùi Xuân Sơn</strong>. Hệ thống tự động quét và cộng tiền sau 5 đến 30 giây.
+            Quét mã QR chuyển khoản trực tiếp vào tài khoản <strong>MB Bank</strong> của <strong>Bùi Xuân Sơn</strong>. Hệ thống tự động quét và cộng tiền sau 5 đến 30 giây.
           </p>
         </div>
 
@@ -287,15 +287,15 @@ export const DepositView: React.FC<DepositViewProps> = ({
 
           {/* VietQR Display Box */}
           <div className="relative mx-auto max-w-[280px] bg-white p-3.5 rounded-2xl shadow-lg border border-slate-200 text-center">
-            {/* Vietcombank Brand Header on QR */}
+            {/* MB Bank Brand Header on QR */}
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 px-1">
               <div className="flex items-center gap-1.5">
-                <div className="w-6 h-6 rounded-md bg-emerald-700 flex items-center justify-center text-white font-black text-[10px]">
-                  VCB
+                <div className="w-6 h-6 rounded-md bg-blue-700 flex items-center justify-center text-white font-black text-[10px]">
+                  MB
                 </div>
-                <span className="text-xs font-black text-slate-800">Vietcombank</span>
+                <span className="text-xs font-black text-slate-800">MB Bank</span>
               </div>
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
                 VietQR Pro
               </span>
             </div>
@@ -333,7 +333,7 @@ export const DepositView: React.FC<DepositViewProps> = ({
                   Ngân hàng thụ hưởng
                 </span>
                 <span className="font-bold text-app-text text-sm">
-                  Vietcombank (VCB)
+                  MB Bank (Quân Đội)
                 </span>
               </div>
             </div>
