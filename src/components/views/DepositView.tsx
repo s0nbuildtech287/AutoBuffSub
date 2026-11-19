@@ -30,9 +30,9 @@ export const DepositView: React.FC<DepositViewProps> = ({
   user,
   onBalanceUpdate,
 }) => {
-  // Preset denominations
-  const denominations = [50000, 100000, 200000, 500000, 1000000, 2000000];
-  const [selectedAmount, setSelectedAmount] = useState<number>(100000);
+  // Preset denominations (Cho phép nạp tối thiểu từ 5.000 VND)
+  const denominations = [5000, 10000, 20000, 50000, 100000, 200000];
+  const [selectedAmount, setSelectedAmount] = useState<number>(50000);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [qrLoaded, setQrLoaded] = useState<boolean>(false);
@@ -59,7 +59,7 @@ export const DepositView: React.FC<DepositViewProps> = ({
   }, [user]);
 
   const transferMemo = `ABS ${userCode}`;
-  const effectiveAmount = customAmount ? Math.max(10000, Number(customAmount)) : selectedAmount;
+  const effectiveAmount = customAmount ? Math.max(5000, Number(customAmount)) : selectedAmount;
 
   // VietQR URL with official Napas247 standard
   const qrUrl = `https://img.vietqr.io/image/${BANK_CONFIG.bankId}-${BANK_CONFIG.accountNumber}-compact2.png?amount=${effectiveAmount}&addInfo=${encodeURIComponent(
@@ -178,7 +178,7 @@ export const DepositView: React.FC<DepositViewProps> = ({
                 </span>
                 <span>Chọn Số Tiền Cần Nạp</span>
               </h3>
-              <span className="text-xs font-semibold text-emerald-500">Tối thiểu 10.000 ₫</span>
+              <span className="text-xs font-semibold text-emerald-500">Tối thiểu 5.000 ₫</span>
             </div>
 
             {/* Quick Denominations */}
@@ -214,9 +214,9 @@ export const DepositView: React.FC<DepositViewProps> = ({
               <div className="relative">
                 <input
                   type="number"
-                  min="10000"
-                  step="10000"
-                  placeholder="Ví dụ: 350000"
+                  min="5000"
+                  step="1000"
+                  placeholder="Tối thiểu 5.000 ₫ (Ví dụ: 5000, 25000...)"
                   value={customAmount}
                   onChange={(e) => {
                     setCustomAmount(e.target.value);
