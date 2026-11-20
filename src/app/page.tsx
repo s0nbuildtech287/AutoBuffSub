@@ -107,6 +107,7 @@ export default function App() {
       if (stored) {
         const parsed = JSON.parse(stored);
         setUser(parsed);
+        fetchOrders(parsed);
         // Đồng bộ số dư thực tế từ Google Sheet Database
         fetch(`/api/user/balance?username=${encodeURIComponent(parsed.username)}`)
           .then((res) => res.json())
@@ -134,7 +135,6 @@ export default function App() {
       if (srvData.success && Array.isArray(srvData.data)) {
         setServices(srvData.data);
       }
-      fetchOrders();
     } catch (err) {
       console.error('Fetch data error:', err);
     } finally {
@@ -142,9 +142,14 @@ export default function App() {
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (targetUser?: AuthUser | null) => {
     try {
-      const res = await fetch('/api/orders');
+      const activeUser = targetUser !== undefined ? targetUser : user;
+      if (!activeUser || !activeUser.username) {
+        setOrders([]);
+        return;
+      }
+      const res = await fetch(`/api/orders?username=${encodeURIComponent(activeUser.username.trim())}`);
       const data = await res.json();
       if (data.success) {
         setOrders(data.data || []);
@@ -169,6 +174,7 @@ export default function App() {
     setUser(authUser);
     setIsAuthModalOpen(false);
     setViewMode('app');
+    fetchOrders(authUser);
     setToastMessage({
       type: 'success',
       text: `🎉 Xin chào, ${authUser.fullName}! Đăng nhập thành công.`,
@@ -197,12 +203,22 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem('auto_buff_user');
     setUser(null);
+    setOrders([]);
     setViewMode('landing');
     setToastMessage({
       type: 'success',
       text: 'Đã đăng xuất thành công khỏi hệ thống.',
     });
   };
+
+  // Tự động tải đơn hàng khi người dùng chuyển sang tab Lịch sử hoặc đổi tài khoản
+  useEffect(() => {
+    if (user && user.username) {
+      fetchOrders(user);
+    } else {
+      setOrders([]);
+    }
+  }, [user?.username, currentView]);
 
   // Platform & Category Selection
   const currentPlatform = useMemo(() => {
@@ -308,7 +324,7 @@ export default function App() {
           text: `🎉 Đặt đơn thành công! Mã đơn: #${data.orderId}`,
         });
         setTargetLink('');
-        fetchOrders();
+        fetchOrders(user);
         // Cập nhật số dư thực tế từ Server/Google Sheet trả về
         if (user) {
           const newBal = typeof data.newBalance === 'number' ? data.newBalance : Math.max(0, user.balanceVnd - totalCostVnd);
@@ -601,7 +617,7 @@ export default function App() {
               {currentView === 'history' && (
                 <OrderHistoryView
                   orders={orders}
-                  onRefresh={fetchOrders}
+                  onRefresh={() => fetchOrders(user)}
                   isLoading={isLoading}
                 />
               )}

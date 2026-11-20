@@ -56,17 +56,31 @@ export class GoogleSheetsOrderRepository implements IOrderRepository {
     }
   }
 
-  async getOrders(): Promise<OrderEntity[]> {
+  async getOrders(username?: string): Promise<OrderEntity[]> {
     if (!this.webhookUrl) return [];
 
     try {
-      const response = await fetch(this.webhookUrl, {
+      const url = username
+        ? `${this.webhookUrl}?action=GET_ORDERS&username=${encodeURIComponent(username.trim())}`
+        : this.webhookUrl;
+
+      const response = await fetch(url, {
         method: 'GET',
         cache: 'no-store',
       });
 
       const data = await response.json();
-      return data.data || [];
+      const allOrders: OrderEntity[] = data.data || [];
+
+      // Lọc bảo mật tại chỗ theo username nếu có
+      if (username && username.trim()) {
+        const cleanUser = username.trim().toLowerCase();
+        return allOrders.filter(
+          (o) => (o.username || '').toLowerCase() === cleanUser
+        );
+      }
+
+      return allOrders;
     } catch (error) {
       console.error('[GoogleSheetsOrderRepository] Error fetching orders from sheet:', error);
       return [];

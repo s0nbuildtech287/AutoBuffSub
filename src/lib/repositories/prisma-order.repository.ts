@@ -17,8 +17,8 @@ export class PrismaOrderRepository implements IOrderRepository {
     return true;
   }
 
-  async getOrders(): Promise<OrderEntity[]> {
-    console.log('[PrismaOrderRepository] Fetching orders from PostgreSQL');
+  async getOrders(username?: string): Promise<OrderEntity[]> {
+    console.log('[PrismaOrderRepository] Fetching orders from PostgreSQL for:', username || 'all');
     return [];
   }
 

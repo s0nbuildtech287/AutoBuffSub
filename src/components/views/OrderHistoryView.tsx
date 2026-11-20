@@ -15,6 +15,16 @@ interface OrderHistoryViewProps {
   isLoading: boolean;
 }
 
+const formatOrderDate = (dateVal?: any): string => {
+  if (!dateVal) return 'Mới tạo';
+  const str = String(dateVal).trim();
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleString('vi-VN');
+  }
+  return str;
+};
+
 export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({
   orders,
   onRefresh,
@@ -84,7 +94,7 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({
 
                 <div className="pt-2 border-t border-app-border flex items-center justify-between text-[11.5px]">
                   <span className="text-app-subtle">
-                    {ord.createdAt ? new Date(ord.createdAt).toLocaleString('vi-VN') : 'Mới tạo'}
+                    {formatOrderDate(ord.createdAt)}
                   </span>
                   <div>
                     <span className="text-app-muted">SL: </span>
@@ -118,7 +128,7 @@ export const OrderHistoryView: React.FC<OrderHistoryViewProps> = ({
                   <tr key={ord.orderId || idx} className="hover:bg-app-elevated/50 transition">
                     <td className="py-3 px-3 font-bold text-app-text">#{ord.orderId}</td>
                     <td className="py-3 px-3 text-app-muted whitespace-nowrap">
-                      {ord.createdAt ? new Date(ord.createdAt).toLocaleString('vi-VN') : 'Mới tạo'}
+                      {formatOrderDate(ord.createdAt)}
                     </td>
                     <td className="py-3 px-3 text-app-text max-w-[220px] truncate" title={ord.serviceName}>
                       {ord.serviceName}

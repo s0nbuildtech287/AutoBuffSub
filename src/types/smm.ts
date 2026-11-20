@@ -44,6 +44,7 @@ export interface OrderEntity {
   costVnd: number;
   status: string;
   remains: number;
+  username?: string;
   createdAt?: string;
   updatedAt?: string;
 }

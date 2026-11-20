@@ -122,14 +122,29 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const orders = await orderRepository.getOrders();
-    return NextResponse.json({ success: true, data: orders });
+    const { searchParams } = new URL(req.url);
+    const username = searchParams.get('username');
+
+    // Bảo mật: Nếu chưa đăng nhập hoặc không truyền username, không hiển thị đơn của ai khác
+    if (!username || !username.trim()) {
+      return NextResponse.json({ success: true, data: [] });
+    }
+
+    const cleanUsername = username.trim().toLowerCase();
+    const orders = await orderRepository.getOrders(cleanUsername);
+
+    // Lọc bảo mật 2 lớp: Chỉ trả về đúng đơn hàng của tài khoản đang đăng nhập
+    const userOrders = orders.filter(
+      (o) => (o.username || '').toLowerCase() === cleanUsername
+    );
+
+    return NextResponse.json({ success: true, data: userOrders });
   } catch (error: any) {
     console.error('[API /orders GET] Exception:', error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Lỗi lấy danh sách đơn hàng.' },
+      { success: false, error: 'Lỗi lấy danh sách đơn hàng.' },
       { status: 500 }
     );
   }

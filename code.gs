@@ -444,19 +444,26 @@ function doGet(e) {
       return createJsonResponse({ success: true, username: username, balanceVnd: 0 });
     }
 
-    // MẶC ĐỊNH: LẤY DANH SÁCH ĐƠN HÀNG
+    // MẶC ĐỊNH: LẤY DANH SÁCH ĐƠN HÀNG (Có hỗ trợ lọc theo username của tài khoản)
     var sheet = ss.getSheetByName(SHEET_ORDERS);
     if (!sheet) {
       return createJsonResponse({ success: true, data: [] });
     }
 
+    var filterUser = String(e.parameter.username || "").trim().toLowerCase();
     var rows = sheet.getDataRange().getValues();
     var orders = [];
 
     for (var i = 1; i < rows.length; i++) {
       if (rows[i][1]) {
+        var orderUser = String(rows[i][10] || "").trim();
+        // Nếu có truyền username thì chỉ lấy đơn của đúng username đó!
+        if (filterUser && orderUser.toLowerCase() !== filterUser) {
+          continue;
+        }
+
         orders.push({
-          createdAt: rows[i][0],
+          createdAt: rows[i][0] ? String(rows[i][0]) : "",
           orderId: rows[i][1],
           serviceId: rows[i][2],
           serviceName: rows[i][3],
@@ -465,7 +472,7 @@ function doGet(e) {
           costVnd: rows[i][6],
           status: rows[i][7],
           remains: rows[i][8],
-          username: rows[i][10] || ""
+          username: orderUser
         });
       }
     }

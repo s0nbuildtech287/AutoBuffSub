@@ -12,9 +12,9 @@ export interface IOrderRepository {
   updateOrderStatus(orderId: number, status: string, remains: number): Promise<boolean>;
 
   /**
-   * Lấy toàn bộ danh sách đơn hàng đã đặt
+   * Lấy danh sách đơn hàng đã đặt (tùy chọn lọc theo username)
    */
-  getOrders(): Promise<OrderEntity[]>;
+  getOrders(username?: string): Promise<OrderEntity[]>;
 
   /**
    * Tìm đơn hàng theo Order ID từ Baostar
