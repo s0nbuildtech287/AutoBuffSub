@@ -6,26 +6,39 @@ const BAOSTAR_API_KEY = process.env.BAOSTAR_API_KEY || '';
 class BaostarClient {
   private async post(payload: Record<string, any>) {
     if (!BAOSTAR_API_KEY) {
-      throw new Error('API key chưa được cấu hình');
+      return { error: 'API key chưa được cấu hình' };
     }
 
-    const response = await fetch(BAOSTAR_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        key: BAOSTAR_API_KEY,
-        ...payload,
-      }),
-      cache: 'no-store',
-    });
+    try {
+      const response = await fetch(BAOSTAR_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: BAOSTAR_API_KEY,
+          ...payload,
+        }),
+        cache: 'no-store',
+      });
 
-    if (!response.ok) {
-      throw new Error(`Máy chủ dịch vụ phản hồi mã lỗi: ${response.status}`);
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        return {
+          error: data.error || data.message || `Máy chủ dịch vụ phản hồi mã lỗi: ${response.status}`,
+          status: response.status,
+          ...data,
+        };
+      }
+
+      return data;
+    } catch (err: any) {
+      console.error('[BaostarClient] Network / Fetch error:', err);
+      return {
+        error: 'Không thể kết nối đến máy chủ dịch vụ',
+      };
     }
-
-    return response.json();
   }
 
   async getBalance(): Promise<BaostarBalance> {

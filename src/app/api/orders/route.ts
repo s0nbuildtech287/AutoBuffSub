@@ -5,13 +5,17 @@ import { calculateOrderTotalCost } from '@/lib/pricing';
 import { deductBalanceOnSheet, refundBalanceOnSheet } from '@/lib/sheetsService';
 
 export async function POST(req: NextRequest) {
+  let isDeducted = false;
+  let cleanUsername = '';
+  let verifiedCostVnd = 0;
+
   try {
     const body = await req.json();
     const { serviceId, link, quantity, username } = body;
 
     const numServiceId = Number(serviceId);
     const numQuantity = parseInt(String(quantity), 10);
-    const cleanUsername = String(username || '').trim();
+    cleanUsername = String(username || '').trim();
 
     // 1. Kiểm tra tài khoản người dùng
     if (!cleanUsername) {
@@ -52,9 +56,32 @@ export async function POST(req: NextRequest) {
 
     // 4. Tự tính toán chi phí chính xác ở Backend (Bao gồm 30% lợi nhuận, không tin dữ liệu gửi từ Client)
     const originalRateVndPer1k = targetService.vnd || Number(targetService.rate) * 27000;
-    const verifiedCostVnd = calculateOrderTotalCost(originalRateVndPer1k, numQuantity);
+    verifiedCostVnd = calculateOrderTotalCost(originalRateVndPer1k, numQuantity);
 
-    // 5. BẢO MẬT TÀI CHÍNH: KIỂM TRA & TRỪ TIỀN THỰC TẾ TRÊN DATABASE (GOOGLE SHEET) TRƯỚC
+    // 4.1 BẢO VỆ TÀI CHÍNH: KIỂM TRA SỐ DƯ TÀI KHOẢN NGUỒN TRƯỚC KHI TRỪ TIỀN KHÁCH
+    const originalRateUsd = Number(targetService.rate || 0);
+    const requiredUsd = (originalRateUsd * numQuantity) / 1000;
+
+    try {
+      const upstreamBal = await baostarClient.getBalance();
+      const currentUsd = Number(upstreamBal?.balance || 0);
+
+      // Nếu ví nguồn không đủ tiền để chạy đơn này -> DỪNG NGAY, TUYỆT ĐỐI KHÔNG TRỪ TIỀN KHÁCH!
+      if (currentUsd < requiredUsd) {
+        console.warn(`[API /orders] Cổng nguồn không đủ số dư. Hiện có: $${currentUsd}, cần: $${requiredUsd}`);
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Máy chủ dịch vụ này hiện đang tạm thời bảo trì hoặc đạt giới hạn số lượng trong ngày. Vui lòng thử lại sau ít phút hoặc chọn máy chủ khác!',
+          },
+          { status: 400 }
+        );
+      }
+    } catch (balErr) {
+      console.warn('[API /orders] Không thể xác thực số dư nguồn trước:', balErr);
+    }
+
+    // 5. BẢO MẬT TÀI CHÍNH: KIỂM TRA & TRỪ TIỀN THỰC TẾ TRÊN DATABASE (GOOGLE SHEET)
     const deductResult = await deductBalanceOnSheet(cleanUsername, verifiedCostVnd);
 
     if (!deductResult.success) {
@@ -66,6 +93,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    isDeducted = true;
 
     // 6. Sau khi đã trừ tiền thành công, gửi lệnh tạo đơn thực tế sang Baostar
     const baostarRes = await baostarClient.addOrder(numServiceId, link.trim(), numQuantity);
@@ -73,12 +101,19 @@ export async function POST(req: NextRequest) {
     // Nếu gặp lỗi từ đối tác, HOÀN TIỀN NGAY LẬP TỨC cho người dùng
     if (baostarRes.error || !baostarRes.order) {
       const rawError = baostarRes.error || 'Máy chủ hệ thống không phản hồi đơn hàng hợp lệ.';
-      const sanitizedError = String(rawError)
+      let sanitizedError = String(rawError)
         .replace(/baostar(\.net)?/gi, 'máy chủ')
         .replace(/smm/gi, 'dịch vụ');
+
+      // Nếu lỗi do hết tiền nguồn -> ẩn giấu tế nhị
+      if (/số dư không đủ|not enough funds|balance/i.test(rawError)) {
+        sanitizedError = 'máy chủ đạt giới hạn số lượng trong ngày';
+      }
+
       console.warn(`[API /orders] Order failed: ${sanitizedError}. Refunding ${verifiedCostVnd} to ${cleanUsername}`);
       
       await refundBalanceOnSheet(cleanUsername, verifiedCostVnd, `Order Error: ${sanitizedError}`);
+      isDeducted = false;
 
       return NextResponse.json(
         {
@@ -115,8 +150,19 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('[API /orders POST] Exception:', error);
+
+    // Cơ chế khẩn cấp: Nếu đã lỡ trừ tiền mà bị lỗi bất ngờ -> Tự động hoàn tiền ngay
+    if (isDeducted && cleanUsername && verifiedCostVnd > 0) {
+      console.warn(`[API /orders POST] Emergency refunding ${verifiedCostVnd} to ${cleanUsername}`);
+      try {
+        await refundBalanceOnSheet(cleanUsername, verifiedCostVnd, 'Hệ thống ngoại lệ, tự động hoàn tiền');
+      } catch (refErr) {
+        console.error('[API /orders POST] Emergency refund error:', refErr);
+      }
+    }
+
     return NextResponse.json(
-      { success: false, error: error.message || 'Lỗi xử lý đặt đơn từ hệ thống.' },
+      { success: false, error: 'Lỗi xử lý đặt đơn từ hệ thống. Nếu có trừ tiền, số tiền đã được hoàn lại.' },
       { status: 500 }
     );
   }
